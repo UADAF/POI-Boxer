@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gt22.boxer.gui.Controller"
+      fx:id="root"
+      prefHeight="550.0" prefWidth="1000.0">
+    <VBox fx:id="controls">
+        <Button fx:id="open" onAction="#open">Open Image</Button>
+        <TextField fx:id="outName" promptText="Output file name"/>
+        <Button fx:id="save" onAction="#save">Save boxed image</Button>
+        <ListView fx:id="boxes" disable="true"/>
+    </VBox>
+    <ImageView fx:id="image" preserveRatio="true" pickOnBounds="true" onMouseClicked="#select"/>
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
+</HBox>
