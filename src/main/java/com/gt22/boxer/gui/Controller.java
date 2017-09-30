@@ -52,7 +52,7 @@ public class Controller {
 					selectedFace.boxImg = newValue.getImg().get();
 					updateBoxes(currentImage);
 				}
-			}))));
+			}, Unchecked.RETHROW_ALL))));
 		boxes.setItems(FXCollections.observableArrayList(
 			Classification.IRRELEVANT,
 			Classification.ASSET,
@@ -61,7 +61,8 @@ public class Controller {
 			Classification.RELEVANT_ONE,
 			Classification.IRRELEVANT_THREAT,
 			Classification.RELEVANT_THREAT,
-			Classification.UNKNOWN
+			Classification.UNKNOWN,
+			Classification.UNRENDERABLE
 		));
 	}
 
@@ -71,19 +72,17 @@ public class Controller {
 
 		//Scale x and y to image coords
 		Bounds bounds = image.getLayoutBounds();
-		x /= (bounds.getWidth() / image.getImage().getWidth());
-		y /= (bounds.getHeight() / image.getImage().getHeight());
 
-		boolean found = false;
-		for (FacialDetector.Face f : recognizedFaces) {
-			opencv_core.Rect r = f.rect;
-			if (x >= r.x() && x <= r.x() + r.width() && y >= r.y() && y <= r.y() + r.height()) {
-				selectedFace = f;
-				found = true;
-				break;
-			}
-		}
-		boxes.setDisable(!found);
+		//fx and fy is workaround for lambda
+		double fx = x / (bounds.getWidth() / image.getImage().getWidth());
+		double fy = y / (bounds.getHeight() / image.getImage().getHeight());
+
+		selectedFace = recognizedFaces.parallelStream()
+			.filter(f -> isInRect(f.rect, fx, fy))
+			.findFirst()
+			.orElse(null);
+
+		boxes.setDisable(selectedFace == null);
 	}
 
 	private void bindSizes() {
@@ -106,6 +105,7 @@ public class Controller {
 			BufferedImage i = ImageIO.read(f);
 			Platform.runLater(() -> updateImage(i));
 		}));
+		System.out.println(boxes.isVisible());
 	}
 
 	public void save(ActionEvent actionEvent) {
@@ -116,7 +116,7 @@ public class Controller {
 			} else {
 				File f = new File(out);
 				try {
-					ImageIO.write(boxedImage, extractType(f), f);
+					ImageIO.write(drawBoxes(currentImage, false), extractType(f), f);
 					displayMessage("Saved", Color.GREEN, 1000);
 				} catch (Exception e) {
 					displayMessage("Unable to save: " + e.getLocalizedMessage(), Color.RED, 5000);
@@ -155,18 +155,26 @@ public class Controller {
 	}
 
 	private void updateBoxes(BufferedImage base) {
-		boxedImage = drawBoxes(base);
+		boxedImage = drawBoxes(base, true);
 		Platform.runLater(() -> image.setImage(SwingFXUtils.toFXImage(boxedImage, null)));
 	}
 
-	private BufferedImage drawBoxes(BufferedImage src) {
+	private BufferedImage drawBoxes(BufferedImage src, boolean renderUnrenderable) {
 		BufferedImage img = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = img.createGraphics();
 		g.drawImage(src, 0, 0, null);
 		if (recognizedFaces != null) {
-			recognizedFaces.forEach(f -> g.drawImage(f.boxImg, f.rect.x(), f.rect.y(), f.rect.width(), f.rect.width(), null));
+			recognizedFaces.forEach(f -> {
+				if (renderUnrenderable || f.box != Classification.UNRENDERABLE) {
+					g.drawImage(f.boxImg, f.rect.x(), f.rect.y(), f.rect.width(), f.rect.width(), null);
+				}
+			});
 		}
 		g.dispose();
 		return img;
+	}
+
+	private boolean isInRect(opencv_core.Rect r, double x, double y) {
+		return x > r.x() && x < r.x() + r.width() && y > r.y() && y < r.y() + r.height();
 	}
 }

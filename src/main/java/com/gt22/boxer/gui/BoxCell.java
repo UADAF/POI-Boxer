@@ -22,6 +22,7 @@ public class BoxCell extends ListCell<Classification> {
 
 	@Override
 	protected void updateItem(Classification item, boolean empty) {
+		if(!isItemChanged(getItem(), item)) return;
 		super.updateItem(item, empty);
 		setText(null);
 		if(empty || item == null) {
@@ -30,8 +31,16 @@ public class BoxCell extends ListCell<Classification> {
 			Instances.getExecutor().submit(Unchecked.runnable(() -> {
 				Image img = SwingFXUtils.toFXImage(item.getImg().get(), null);
 				Platform.runLater(() -> g.setImage(img));
+			}, e -> {
+				e.printStackTrace();
+				System.exit(1);
 			}));
 			setGraphic(g);
 		}
+	}
+
+	@Override
+	protected boolean isItemChanged(Classification oldItem, Classification newItem) {
+		return oldItem != newItem;
 	}
 }

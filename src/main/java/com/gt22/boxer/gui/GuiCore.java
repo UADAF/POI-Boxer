@@ -20,6 +20,7 @@ public class GuiCore extends Application {
 		stage = primaryStage;
 		primaryStage.setOnCloseRequest(e -> System.exit(0));
 		primaryStage.setScene(scene);
+		primaryStage.setTitle("Poi-Boxer");
 		primaryStage.show();
 	}
 

@@ -21,6 +21,7 @@ public class Classification {
 	public static final Classification CATALYST = new Classification("Catalyst", "https://vignette2.wikia.nocookie.net/pediaofinterest/images/2/2e/S03-BlueSquare.svg/revision/latest/scale-to-width-down/", Color.BLUE);
 	public static final Classification RELEVANT_ONE = new Classification("Relevant-One", "https://vignette3.wikia.nocookie.net/pediaofinterest/images/a/a3/S05-BlueSquareWhiteCorners.svg/revision/latest/scale-to-width-down/", Color.BLUE);
 	public static final Classification UNKNOWN = new Classification("Unknown", "https://cdn.discordapp.com/attachments/197699632841752576/338403812576329728/classes.png", Color.GRAY);
+	public static final Classification UNRENDERABLE = new Classification("Unrenderable", "NONE", Color.BLACK);
 	private static final Map<String, Classification> CLASS_MAP = new HashMap<>();
 	private static final Map<Integer, Future<BufferedImage>> UNKNOWN_IMAGE_CACHE = new HashMap<>();
 
@@ -33,12 +34,14 @@ public class Classification {
 		registerClass(CATALYST);
 		registerClass(RELEVANT_ONE);
 		registerClass(UNKNOWN);
+		registerClass(UNRENDERABLE);
 	}
 
 
 	private final String name;
 	private final String img;
 	private final Color color;
+
 	private Classification(String name, String img, Color color) {
 		this.name = name;
 		this.img = img;
@@ -80,12 +83,14 @@ public class Classification {
 	}
 
 	public Future<BufferedImage> getImg(int size) {
-		if(size == DEFAULT_IMAGE_SIZE) { //Preloaded image in resources
+		if (size == DEFAULT_IMAGE_SIZE) { //Preloaded image in resources
 			return Instances.getExecutor().submit(() ->
 				ImageIO.read(getClass().getResourceAsStream("/boxes/" + getUnlocName() + ".png")));
 		}
-		if (this == UNKNOWN) {
-			if(UNKNOWN_IMAGE_CACHE.containsKey(size)) {
+		if (this == UNRENDERABLE) {
+			throw new IllegalArgumentException("Can't get unrenderable from with size other than default (" + DEFAULT_IMAGE_SIZE + ")");
+		} else if (this == UNKNOWN) {
+			if (UNKNOWN_IMAGE_CACHE.containsKey(size)) {
 				return UNKNOWN_IMAGE_CACHE.get(size);
 			} else {
 				Future<BufferedImage> f = Instances.getExecutor().submit(() -> {

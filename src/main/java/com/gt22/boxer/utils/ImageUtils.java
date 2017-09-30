@@ -54,8 +54,8 @@ public class ImageUtils {
 				try {
 					HttpResponse res = Instances.getHttpClient().execute(RequestBuilder.get(url).build());
 					if (res.getStatusLine().getStatusCode() != 200) {
-						System.out.println(res.getStatusLine().getStatusCode());
-						System.exit(3);
+						log.warn("Unable to load " + url + ": " + res.getStatusLine().getStatusCode());
+						return new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 					}
 					BufferedImage read = ImageIO.read(res.getEntity().getContent());
 					log.debug("Image " + url + " loaded");
